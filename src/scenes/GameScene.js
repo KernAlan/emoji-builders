@@ -726,13 +726,14 @@ export default class GameScene extends Phaser.Scene {
       const neededLetter = player.targetWord[0]; // First letter of target word
       const correctBlockCount = player.blocks.filter(b => b.letter === neededLetter).length;
 
-      // Force correct, or keep at least 2 correct letters on screen
-      if (forceCorrect || correctBlockCount < 2) {
+      // Keep at least 1 correct on screen, otherwise mostly decoys
+      if (forceCorrect || correctBlockCount < 1) {
         letter = neededLetter;
-      } else if (Math.random() < 0.5) {
+      } else if (Math.random() < 0.25) {
+        // Only 25% chance of extra correct letters
         letter = neededLetter;
       } else {
-        // Spawn a decoy letter (wrong answer)
+        // 75% decoys - makes it actually challenging!
         letter = Phaser.Utils.Array.GetRandom(patternData.decoyLetters);
       }
       displayText = letter;
