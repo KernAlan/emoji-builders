@@ -72,15 +72,19 @@ export default class GameScene extends Phaser.Scene {
       });
     }
 
-    // Initial spawns - start with 2 blocks each, spaced out to avoid overlap
-    for (let i = 0; i < 2; i++) {
-      this.time.delayedCall(i * 600, () => {
-        this.spawnBlock(this.player1, 1);
-        if (this.playerCount === 2) {
-          this.spawnBlock(this.player2, 2);
-        }
-      });
+    // Spawn correct answer immediately so player can start right away
+    this.spawnCorrectBlock(this.player1, 1);
+    if (this.playerCount === 2) {
+      this.spawnCorrectBlock(this.player2, 2);
     }
+
+    // Then spawn a couple more blocks
+    this.time.delayedCall(500, () => {
+      this.spawnBlock(this.player1, 1);
+      if (this.playerCount === 2) {
+        this.spawnBlock(this.player2, 2);
+      }
+    });
 
     // Keyboard shortcuts
     this.input.keyboard.on('keydown-ESC', () => {
@@ -115,8 +119,8 @@ export default class GameScene extends Phaser.Scene {
       blocks: [],
       // Fast adaptive difficulty tracking
       recentResults: [], // Last 5 results (true=success, false=fail)
-      currentFallSpeed: DIFFICULTY.easy.fallSpeed,
-      currentSpawnInterval: 1800, // Balanced to prevent overlap
+      currentFallSpeed: 120, // Start fast - no waiting!
+      currentSpawnInterval: 1200, // Quick spawns
       streak: 0 // Positive for success streak, negative for fail streak
     };
   }
@@ -885,9 +889,53 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.checkWinCondition()) return;
 
-    this.time.delayedCall(600, () => {
+    this.time.delayedCall(400, () => {
       this.startNewProblem(player, playerNum);
+      // Immediately spawn the correct answer so player doesn't wait
+      this.spawnCorrectBlock(player, playerNum);
     });
+  }
+
+  spawnCorrectBlock(player, playerNum) {
+    // Spawn a block that is guaranteed to be the winning answer
+    const difficulty = DIFFICULTY[player.difficulty];
+    let startX, endX;
+
+    if (this.playerCount === 1) {
+      startX = TOWER_WIDTH + 50;
+      endX = GAME_WIDTH - 50;
+    } else {
+      const isLeft = playerNum === 1;
+      startX = isLeft ? PLAY_AREA_LEFT_START + 50 : PLAY_AREA_RIGHT_START + 50;
+      endX = isLeft ? PLAY_AREA_LEFT_END - 50 : PLAY_AREA_RIGHT_END - 50;
+    }
+
+    let displayText, value, letter, isValid;
+
+    if (this.gameMode === 'arithmetic') {
+      if (player.isSubtraction) {
+        value = player.currentSum - player.targetSum;
+      } else {
+        value = player.targetSum - player.currentSum;
+      }
+      if (value <= 0) return; // Already solved
+      displayText = value.toString();
+    } else {
+      const patternData = phonicsPatterns[player.currentPattern];
+      const validLetters = [...new Set(patternData.validWords.map(w => w[0]))];
+      letter = Phaser.Utils.Array.GetRandom(validLetters);
+      displayText = letter;
+      isValid = true;
+    }
+
+    const x = Phaser.Math.Between(startX, endX);
+    const block = this.createFallingBlock(x, -BLOCK_SIZE, displayText);
+    block.value = value;
+    block.letter = letter;
+    block.isValid = isValid;
+    block.playerNum = playerNum;
+
+    player.blocks.push(block);
   }
 
   playerFail(player, playerNum) {
@@ -1027,10 +1075,10 @@ export default class GameScene extends Phaser.Scene {
 
   updateAdaptiveDifficulty(player, playerNum) {
     // FAST adaptive difficulty - adjusts immediately based on performance
-    const minSpeed = 40;  // Slowest fall speed (easier)
-    const maxSpeed = 120; // Fastest fall speed (harder)
-    const minInterval = 1000; // Fastest spawn (harder) - prevents overlap
-    const maxInterval = 2200; // Slowest spawn (easier)
+    const minSpeed = 80;  // Slowest fall speed (still quick)
+    const maxSpeed = 180; // Fastest fall speed (harder)
+    const minInterval = 800;  // Fastest spawn
+    const maxInterval = 1500; // Slowest spawn (still quick)
 
     // Calculate success rate from recent results
     const successCount = player.recentResults.filter(r => r).length;
