@@ -602,57 +602,39 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  spawnBlock(player, playerNum) {
+  spawnBlock(player, playerNum, forceCorrect = false) {
     const difficulty = DIFFICULTY[player.difficulty];
-    let startX, endX;
-
-    if (this.playerCount === 1) {
-      // Single player - use full width
-      startX = TOWER_WIDTH + 50;
-      endX = GAME_WIDTH - 50;
-    } else {
-      // Two players - use half width based on player
-      const isLeft = playerNum === 1;
-      startX = isLeft ? PLAY_AREA_LEFT_START + 50 : PLAY_AREA_RIGHT_START + 50;
-      endX = isLeft ? PLAY_AREA_LEFT_END - 50 : PLAY_AREA_RIGHT_END - 50;
-    }
+    const isLeft = playerNum === 1;
+    const startX = this.playerCount === 1 ? TOWER_WIDTH + 50 : (isLeft ? PLAY_AREA_LEFT_START + 50 : PLAY_AREA_RIGHT_START + 50);
+    const endX = this.playerCount === 1 ? GAME_WIDTH - 50 : (isLeft ? PLAY_AREA_LEFT_END - 50 : PLAY_AREA_RIGHT_END - 50);
 
     let displayText, value, letter, isValid;
 
     if (this.gameMode === 'arithmetic') {
-      // Calculate the exact value needed to complete
-      let neededValue;
-      if (player.isSubtraction) {
-        neededValue = player.currentSum - player.targetSum;
-      } else {
-        neededValue = player.targetSum - player.currentSum;
-      }
+      const neededValue = player.isSubtraction
+        ? player.currentSum - player.targetSum
+        : player.targetSum - player.currentSum;
 
-      // Count how many correct blocks are on screen
+      if (neededValue <= 0) return; // Already solved or failed
+
       const correctBlockCount = player.blocks.filter(b => b.value === neededValue).length;
 
-      // ALWAYS keep at least 2 correct answers on screen
-      if (correctBlockCount < 2 && neededValue > 0) {
+      // Force correct, or keep at least 2 correct answers on screen
+      if (forceCorrect || correctBlockCount < 2) {
         value = neededValue;
       } else if (Math.random() < 0.5) {
-        // 50% chance for the exact answer
-        value = neededValue > 0 ? neededValue : Phaser.Math.Between(1, difficulty.maxSum);
+        value = neededValue;
       } else {
-        // 50% variety
         value = Phaser.Math.Between(1, difficulty.maxSum);
       }
       displayText = value.toString();
     } else {
       const patternData = phonicsPatterns[player.currentPattern];
       const validLetters = [...new Set(patternData.validWords.map(w => w[0]))];
-
-      // Count how many valid letters are on screen
       const validBlockCount = player.blocks.filter(b => validLetters.includes(b.letter)).length;
 
-      // ALWAYS keep at least 2 valid letters on screen
-      if (validBlockCount < 2) {
-        letter = Phaser.Utils.Array.GetRandom(validLetters);
-      } else if (Math.random() < 0.5) {
+      // Force correct, or keep at least 2 valid letters on screen
+      if (forceCorrect || validBlockCount < 2 || Math.random() < 0.5) {
         letter = Phaser.Utils.Array.GetRandom(validLetters);
       } else {
         letter = Phaser.Utils.Array.GetRandom(patternData.decoyLetters);
@@ -893,45 +875,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   spawnCorrectBlock(player, playerNum) {
-    // Spawn a block that is guaranteed to be the winning answer
-    const difficulty = DIFFICULTY[player.difficulty];
-    let startX, endX;
-
-    if (this.playerCount === 1) {
-      startX = TOWER_WIDTH + 50;
-      endX = GAME_WIDTH - 50;
-    } else {
-      const isLeft = playerNum === 1;
-      startX = isLeft ? PLAY_AREA_LEFT_START + 50 : PLAY_AREA_RIGHT_START + 50;
-      endX = isLeft ? PLAY_AREA_LEFT_END - 50 : PLAY_AREA_RIGHT_END - 50;
-    }
-
-    let displayText, value, letter, isValid;
-
-    if (this.gameMode === 'arithmetic') {
-      if (player.isSubtraction) {
-        value = player.currentSum - player.targetSum;
-      } else {
-        value = player.targetSum - player.currentSum;
-      }
-      if (value <= 0) return; // Already solved
-      displayText = value.toString();
-    } else {
-      const patternData = phonicsPatterns[player.currentPattern];
-      const validLetters = [...new Set(patternData.validWords.map(w => w[0]))];
-      letter = Phaser.Utils.Array.GetRandom(validLetters);
-      displayText = letter;
-      isValid = true;
-    }
-
-    const x = Phaser.Math.Between(startX, endX);
-    const block = this.createFallingBlock(x, -BLOCK_SIZE, displayText);
-    block.value = value;
-    block.letter = letter;
-    block.isValid = isValid;
-    block.playerNum = playerNum;
-
-    player.blocks.push(block);
+    // Force spawn the correct answer
+    this.spawnBlock(player, playerNum, true);
   }
 
   playerFail(player, playerNum) {
