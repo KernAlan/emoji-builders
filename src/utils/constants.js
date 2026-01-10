@@ -51,3 +51,6 @@ export const DIFFICULTY = {
 
 // Blocks needed to win
 export const BLOCKS_TO_WIN = 6;
+
+// Shared lives for co-op mode
+export const SHARED_LIVES = 3;

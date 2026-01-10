@@ -27,11 +27,15 @@ export default class GameScene extends Phaser.Scene {
     this.playerCount = data.playerCount || 2;
     this.mathType = 'addition';
     this.isPaused = false;
+
+    // Shared co-op state (2-player mode only)
+    this.sharedTowerHeight = 0;
   }
 
   create() {
     this.cameras.main.fadeIn(300);
     soundManager.init();
+    soundManager.startMusic();
 
     this.player1 = this.createPlayerState();
     this.player2 = this.createPlayerState();
@@ -45,12 +49,15 @@ export default class GameScene extends Phaser.Scene {
     this.createTowerAreas();
     this.createCatchers();
     this.createEquationDisplay();
+    this.createInstructionDisplay();
     this.createUI();
     this.createPauseMenu();
     this.setupInput();
 
     this.player1TowerBlocks = [];
     this.player2TowerBlocks = [];
+    this.sharedTowerBlocks = [];
+
 
     this.startNewProblem(this.player1, 1);
     if (this.playerCount === 2) {
@@ -91,6 +98,7 @@ export default class GameScene extends Phaser.Scene {
       if (this.isPaused) {
         this.resumeGame();
       } else {
+        soundManager.stopMusic();
         this.scene.start('MenuScene');
       }
     });
@@ -145,23 +153,23 @@ export default class GameScene extends Phaser.Scene {
       this.add.circle(x, y, Phaser.Math.Between(20, 60), 0xffffff, 0.1);
     }
 
-    const modeTitle = this.gameMode === 'alphabet' ? '📚 ALPHABET MODE 📚' : '🔢 ARITHMETIC MODE 🔢';
-
-    this.add.text(GAME_WIDTH / 2, 20, modeTitle, {
-      fontSize: '28px',
-      fontFamily: 'Comic Sans MS, Arial',
-      color: '#ffffff',
-      fontStyle: 'bold',
-      stroke: '#000000',
-      strokeThickness: 3
-    }).setOrigin(0.5);
+    const modeTitle = this.gameMode === 'alphabet' ? '📚 ALPHABET' : '🔢 ARITHMETIC';
 
     // Player labels with mascots
     const p1X = PLAY_AREA_LEFT_START + (PLAY_AREA_LEFT_END - PLAY_AREA_LEFT_START) / 2;
     const mascot = this.gameMode === 'alphabet' ? '🦊' : '🐸';
 
     if (this.playerCount === 1) {
-      // Single player - centered label
+      // Single player - mode title at top
+      this.add.text(GAME_WIDTH / 2, 20, modeTitle + ' MODE', {
+        fontSize: '28px',
+        fontFamily: 'Comic Sans MS, Arial',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 3
+      }).setOrigin(0.5);
+
       this.add.text(GAME_WIDTH / 2, 55, `${mascot} PLAYER 1 ${mascot}`, {
         fontSize: '26px',
         fontFamily: 'Comic Sans MS, Arial',
@@ -179,11 +187,11 @@ export default class GameScene extends Phaser.Scene {
         strokeThickness: 1
       }).setOrigin(0.5);
     } else {
-      // Two players - separate labels
+      // Two players - mode labels on sides, hearts in center (added separately)
       const p2X = PLAY_AREA_RIGHT_START + (PLAY_AREA_RIGHT_END - PLAY_AREA_RIGHT_START) / 2;
 
-      this.add.text(p1X, 55, `${mascot} PLAYER 1`, {
-        fontSize: '26px',
+      this.add.text(p1X, 20, `${mascot} PLAYER 1`, {
+        fontSize: '22px',
         fontFamily: 'Comic Sans MS, Arial',
         color: '#ffffff',
         fontStyle: 'bold',
@@ -191,16 +199,16 @@ export default class GameScene extends Phaser.Scene {
         strokeThickness: 2
       }).setOrigin(0.5);
 
-      this.add.text(p1X, 82, '◀ A   D ▶', {
-        fontSize: '16px',
+      this.add.text(p1X, 45, '◀ A   D ▶', {
+        fontSize: '14px',
         fontFamily: 'Arial',
         color: '#ffffff',
         stroke: '#000000',
         strokeThickness: 1
       }).setOrigin(0.5);
 
-      this.add.text(p2X, 55, `PLAYER 2 ${mascot}`, {
-        fontSize: '26px',
+      this.add.text(p2X, 20, `PLAYER 2 ${mascot}`, {
+        fontSize: '22px',
         fontFamily: 'Comic Sans MS, Arial',
         color: '#ffffff',
         fontStyle: 'bold',
@@ -208,8 +216,8 @@ export default class GameScene extends Phaser.Scene {
         strokeThickness: 2
       }).setOrigin(0.5);
 
-      this.add.text(p2X, 82, '◀ ← → ▶', {
-        fontSize: '16px',
+      this.add.text(p2X, 45, '◀ ←   → ▶', {
+        fontSize: '14px',
         fontFamily: 'Arial',
         color: '#ffffff',
         stroke: '#000000',
@@ -237,38 +245,50 @@ export default class GameScene extends Phaser.Scene {
   }
 
   createTowerAreas() {
-    // Left tower - looks like a building!
-    this.add.rectangle(TOWER_WIDTH / 2, GAME_HEIGHT / 2, TOWER_WIDTH - 10, GAME_HEIGHT - 20, 0x8B4513, 0.6);
-    this.add.rectangle(TOWER_WIDTH / 2, GAME_HEIGHT / 2, TOWER_WIDTH - 20, GAME_HEIGHT - 30, 0xDEB887, 0.4);
-
-    // Tower labels with emoji
-    this.add.text(TOWER_WIDTH / 2, 25, '🏗️', { fontSize: '24px' }).setOrigin(0.5);
-
-    // Win lines - make them obvious!
     const winLineY = GAME_HEIGHT - (BLOCKS_TO_WIN * TOWER_BLOCK_HEIGHT) - 60;
+    const winLines = [];
 
-    const winLine1 = this.add.rectangle(TOWER_WIDTH / 2, winLineY, TOWER_WIDTH - 15, 4, COLORS.gold);
-    const winLines = [winLine1];
+    if (this.playerCount === 1) {
+      // Single player - left tower
+      this.add.rectangle(TOWER_WIDTH / 2, GAME_HEIGHT / 2, TOWER_WIDTH - 10, GAME_HEIGHT - 20, 0x8B4513, 0.6);
+      this.add.rectangle(TOWER_WIDTH / 2, GAME_HEIGHT / 2, TOWER_WIDTH - 20, GAME_HEIGHT - 30, 0xDEB887, 0.4);
 
-    this.add.text(TOWER_WIDTH / 2, winLineY - 15, '⭐ WIN ⭐', {
-      fontSize: '12px',
-      color: '#FFD700',
-      stroke: '#000000',
-      strokeThickness: 2
-    }).setOrigin(0.5);
+      this.add.text(TOWER_WIDTH / 2, 25, '🏗️', { fontSize: '24px', padding: { top: 10 } }).setOrigin(0.5);
 
-    if (this.playerCount === 2) {
-      // Right tower - only for 2 players
-      this.add.rectangle(GAME_WIDTH - TOWER_WIDTH / 2, GAME_HEIGHT / 2, TOWER_WIDTH - 10, GAME_HEIGHT - 20, 0x8B4513, 0.6);
-      this.add.rectangle(GAME_WIDTH - TOWER_WIDTH / 2, GAME_HEIGHT / 2, TOWER_WIDTH - 20, GAME_HEIGHT - 30, 0xDEB887, 0.4);
+      const winLine1 = this.add.rectangle(TOWER_WIDTH / 2, winLineY, TOWER_WIDTH - 15, 4, COLORS.gold);
+      winLines.push(winLine1);
 
-      this.add.text(GAME_WIDTH - TOWER_WIDTH / 2, 25, '🏗️', { fontSize: '24px' }).setOrigin(0.5);
-
-      const winLine2 = this.add.rectangle(GAME_WIDTH - TOWER_WIDTH / 2, winLineY, TOWER_WIDTH - 15, 4, COLORS.gold);
-      winLines.push(winLine2);
-
-      this.add.text(GAME_WIDTH - TOWER_WIDTH / 2, winLineY - 15, '⭐ WIN ⭐', {
+      this.add.text(TOWER_WIDTH / 2, winLineY - 15, '⭐ WIN ⭐', {
         fontSize: '12px',
+        color: '#FFD700',
+        stroke: '#000000',
+        strokeThickness: 2
+      }).setOrigin(0.5);
+    } else {
+      // Two players - SHARED CENTER TOWER (Emoji House!)
+      const centerX = GAME_WIDTH / 2;
+      const towerWidth = 120;
+
+      // Tower/house background - starts lower to not overlap with UI
+      this.add.rectangle(centerX, GAME_HEIGHT / 2 + 120, towerWidth + 20, GAME_HEIGHT / 2 - 20, 0x8B4513, 0.7);
+      this.add.rectangle(centerX, GAME_HEIGHT / 2 + 120, towerWidth, GAME_HEIGHT / 2 - 30, 0xDEB887, 0.5);
+
+      // "EMOJI HOUSE" label with house icon - positioned below equation boxes
+      this.add.text(centerX, 200, '🏠 EMOJI HOUSE', {
+        fontSize: '16px',
+        fontFamily: 'Comic Sans MS, Arial',
+        color: '#8B4513',
+        fontStyle: 'bold',
+        stroke: '#ffffff',
+        strokeThickness: 3
+      }).setOrigin(0.5);
+
+      // Win line on shared tower
+      const winLine = this.add.rectangle(centerX, winLineY, towerWidth, 4, COLORS.gold);
+      winLines.push(winLine);
+
+      this.add.text(centerX, winLineY - 20, '⭐ FINISH ⭐', {
+        fontSize: '14px',
         color: '#FFD700',
         stroke: '#000000',
         strokeThickness: 2
@@ -276,13 +296,15 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // Animate win lines
-    this.tweens.add({
-      targets: winLines,
-      alpha: 0.5,
-      duration: 500,
-      yoyo: true,
-      repeat: -1
-    });
+    if (winLines.length > 0) {
+      this.tweens.add({
+        targets: winLines,
+        alpha: 0.5,
+        duration: 500,
+        yoyo: true,
+        repeat: -1
+      });
+    }
   }
 
   createCatchers() {
@@ -339,21 +361,23 @@ export default class GameScene extends Phaser.Scene {
   }
 
   createEquationDisplay() {
-    const eqY = 140;
-    const eqHeight = 90;
-    const eqWidth = 220;
+    // Position equation boxes below player labels but above blocks
+    const eqY = this.playerCount === 1 ? 140 : 110;
+    const eqHeight = 70;
+    const eqWidth = 200;
 
     if (this.playerCount === 1) {
       // Single player - centered equation box
-      this.eq1Bg = this.add.rectangle(GAME_WIDTH / 2, eqY, eqWidth, eqHeight, 0xffffff, 0.9);
+      this.eq1Bg = this.add.rectangle(GAME_WIDTH / 2, eqY, eqWidth, eqHeight, 0xffffff, 0.95);
       this.eq1Bg.setStrokeStyle(4, this.primaryColor);
+      this.eq1Bg.setDepth(10);
 
       this.eq1Text = this.add.text(GAME_WIDTH / 2, eqY, '', {
-        fontSize: '32px',
+        fontSize: '28px',
         fontFamily: 'Comic Sans MS, Arial',
         color: '#333333',
         fontStyle: 'bold'
-      }).setOrigin(0.5);
+      }).setOrigin(0.5).setDepth(11);
 
       // Dummy player 2 equation objects
       this.eq2Bg = { setStrokeStyle: () => {} };
@@ -364,26 +388,97 @@ export default class GameScene extends Phaser.Scene {
       const p2X = PLAY_AREA_RIGHT_START + (PLAY_AREA_RIGHT_END - PLAY_AREA_RIGHT_START) / 2;
 
       // Player 1 equation box
-      this.eq1Bg = this.add.rectangle(p1X, eqY, eqWidth, eqHeight, 0xffffff, 0.9);
+      this.eq1Bg = this.add.rectangle(p1X, eqY, eqWidth, eqHeight, 0xffffff, 0.95);
       this.eq1Bg.setStrokeStyle(4, this.primaryColor);
+      this.eq1Bg.setDepth(10);
 
       this.eq1Text = this.add.text(p1X, eqY, '', {
-        fontSize: '32px',
+        fontSize: '26px',
         fontFamily: 'Comic Sans MS, Arial',
         color: '#333333',
         fontStyle: 'bold'
-      }).setOrigin(0.5);
+      }).setOrigin(0.5).setDepth(11);
 
       // Player 2 equation box
-      this.eq2Bg = this.add.rectangle(p2X, eqY, eqWidth, eqHeight, 0xffffff, 0.9);
+      this.eq2Bg = this.add.rectangle(p2X, eqY, eqWidth, eqHeight, 0xffffff, 0.95);
       this.eq2Bg.setStrokeStyle(4, this.primaryColor);
+      this.eq2Bg.setDepth(10);
 
       this.eq2Text = this.add.text(p2X, eqY, '', {
-        fontSize: '32px',
+        fontSize: '26px',
         fontFamily: 'Comic Sans MS, Arial',
         color: '#333333',
         fontStyle: 'bold'
-      }).setOrigin(0.5);
+      }).setOrigin(0.5).setDepth(11);
+    }
+  }
+
+  createInstructionDisplay() {
+    // Big "CATCH THE X!" instruction text - below equation boxes
+    const instructionY = this.playerCount === 1 ? 200 : 170;
+
+    if (this.playerCount === 1) {
+      // Single player - centered
+      this.instruction1 = this.add.text(GAME_WIDTH / 2, instructionY, '', {
+        fontSize: '38px',
+        fontFamily: 'Comic Sans MS, Arial',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 5
+      }).setOrigin(0.5).setDepth(12);
+
+      // Dummy for player 2
+      this.instruction2 = { setText: () => {} };
+    } else {
+      // Two players
+      const p1X = PLAY_AREA_LEFT_START + (PLAY_AREA_LEFT_END - PLAY_AREA_LEFT_START) / 2;
+      const p2X = PLAY_AREA_RIGHT_START + (PLAY_AREA_RIGHT_END - PLAY_AREA_RIGHT_START) / 2;
+
+      this.instruction1 = this.add.text(p1X, instructionY, '', {
+        fontSize: '32px',
+        fontFamily: 'Comic Sans MS, Arial',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 4
+      }).setOrigin(0.5).setDepth(12);
+
+      this.instruction2 = this.add.text(p2X, instructionY, '', {
+        fontSize: '32px',
+        fontFamily: 'Comic Sans MS, Arial',
+        color: '#ffffff',
+        fontStyle: 'bold',
+        stroke: '#000000',
+        strokeThickness: 4
+      }).setOrigin(0.5).setDepth(12);
+    }
+  }
+
+  updateInstructionDisplay(player, playerNum) {
+    const instruction = playerNum === 1 ? this.instruction1 : this.instruction2;
+
+    if (this.gameMode === 'arithmetic') {
+      let needed;
+      if (player.isSubtraction) {
+        needed = player.currentSum - player.targetSum;
+      } else {
+        needed = player.targetSum - player.currentSum;
+      }
+
+      if (needed > 4) {
+        // Need more than one block - show progress toward goal
+        instruction.setText(`NEED ${needed} MORE!`);
+      } else if (needed > 0) {
+        // Can finish with one block - show exact value needed
+        instruction.setText(`CATCH A ${needed}!`);
+      } else {
+        instruction.setText('');
+      }
+    } else {
+      const neededLetter = player.targetWord[0];
+      const emoji = getEmojiForWord(player.targetWord);
+      instruction.setText(`CATCH THE ${neededLetter}! ${emoji}`);
     }
   }
 
@@ -467,6 +562,7 @@ export default class GameScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     menuBtn.on('pointerdown', () => {
+      soundManager.stopMusic();
       soundManager.select();
       this.scene.start('MenuScene');
     });
@@ -519,20 +615,14 @@ export default class GameScene extends Phaser.Scene {
     player.caughtNumbers = [];
 
     if (this.gameMode === 'arithmetic') {
-      // Alternate between addition and subtraction
-      player.isSubtraction = player.towerHeight > 0 && Math.random() < 0.4;
+      // Addition only for now - simpler for kids
+      player.isSubtraction = false;
 
-      if (player.isSubtraction) {
-        // Subtraction: Start with a number, subtract down to target
-        player.startNum = Phaser.Math.Between(4, difficulty.maxSum);
-        player.targetSum = Phaser.Math.Between(1, player.startNum - 1);
-        player.currentSum = player.startNum;
-      } else {
-        // Addition: Add up to target
-        player.targetSum = Phaser.Math.Between(3, difficulty.maxSum);
-        player.currentSum = 0;
-        player.startNum = 0;
-      }
+      // Target is 5-10 range - requires catching MULTIPLE blocks
+      // Blocks will only show 1-4, so kids must ADD them up
+      player.targetSum = Phaser.Math.Between(5, Math.min(10, difficulty.maxSum + 2));
+      player.currentSum = 0;
+      player.startNum = 0;
     } else {
       const patterns = difficulty.wordPatterns;
       player.currentPattern = Phaser.Utils.Array.GetRandom(patterns);
@@ -600,6 +690,9 @@ export default class GameScene extends Phaser.Scene {
       eqText.setText(`${emoji}\n${player.currentPattern}`);
       eqText.setFontSize(36);
     }
+
+    // Update the big instruction text too
+    this.updateInstructionDisplay(player, playerNum);
   }
 
   spawnBlock(player, playerNum, forceCorrect = false) {
@@ -611,21 +704,21 @@ export default class GameScene extends Phaser.Scene {
     let displayText, value, letter, isValid;
 
     if (this.gameMode === 'arithmetic') {
-      const neededValue = player.isSubtraction
-        ? player.currentSum - player.targetSum
-        : player.targetSum - player.currentSum;
+      const neededValue = player.targetSum - player.currentSum;
 
       if (neededValue <= 0) return; // Already solved or failed
 
-      const correctBlockCount = player.blocks.filter(b => b.value === neededValue).length;
+      // IMPORTANT: Only spawn blocks with values 1-4
+      // This forces kids to catch MULTIPLE blocks and ADD them
+      // E.g., Target=7: catch 3, then catch 4 (3+4=7!)
+      const maxBlockValue = Math.min(4, neededValue); // Never spawn more than needed
 
-      // Force correct, or keep at least 2 correct answers on screen
-      if (forceCorrect || correctBlockCount < 2) {
-        value = neededValue;
-      } else if (Math.random() < 0.5) {
-        value = neededValue;
+      if (forceCorrect) {
+        // Spawn a value that helps them progress (1 to maxBlockValue)
+        value = Phaser.Math.Between(1, maxBlockValue);
       } else {
-        value = Phaser.Math.Between(1, difficulty.maxSum);
+        // Random value from 1-4, but never more than needed
+        value = Phaser.Math.Between(1, maxBlockValue);
       }
       displayText = value.toString();
     } else {
@@ -854,8 +947,6 @@ export default class GameScene extends Phaser.Scene {
 
   playerSuccess(player, playerNum, word = '') {
     soundManager.success();
-    player.towerHeight++;
-    this.addTowerBlock(playerNum, word);
 
     // Fast adaptive difficulty - track success
     player.streak = Math.max(1, player.streak + 1);
@@ -863,18 +954,116 @@ export default class GameScene extends Phaser.Scene {
     if (player.recentResults.length > 5) player.recentResults.shift();
     this.updateAdaptiveDifficulty(player, playerNum);
 
-    const towerText = playerNum === 1 ? this.tower1Text : this.tower2Text;
-    towerText.setText(player.towerHeight + '/' + BLOCKS_TO_WIN);
+    // Show victory splash with completed equation/word
+    this.showVictorySplash(player, playerNum, word);
 
     // Big celebration!
     this.createBigCelebration(playerNum);
 
-    if (this.checkWinCondition()) return;
+    // Clear all remaining blocks for this player immediately
+    // so stray blocks don't trigger wrong answers
+    for (const block of player.blocks) {
+      block.destroy();
+    }
+    player.blocks = [];
 
-    this.time.delayedCall(400, () => {
+    if (this.playerCount === 1) {
+      // SINGLE PLAYER - individual tower
+      player.towerHeight++;
+      this.addTowerBlock(playerNum, word);
+
+      const towerText = playerNum === 1 ? this.tower1Text : this.tower2Text;
+      towerText.setText(player.towerHeight + '/' + BLOCKS_TO_WIN);
+
+      if (this.checkWinCondition()) return;
+
+      // Start new problem immediately
       this.startNewProblem(player, playerNum);
-      // Immediately spawn the correct answer so player doesn't wait
       this.spawnCorrectBlock(player, playerNum);
+    } else {
+      // TWO PLAYER CO-OP - shared tower, both work independently
+      this.sharedTowerHeight++;
+      this.addSharedTowerBlock(word);
+
+      // Update progress text
+      this.tower1Text.setText(`${this.sharedTowerHeight}/${BLOCKS_TO_WIN}`);
+      if (this.tower2Text && this.tower2Text.setText) {
+        this.tower2Text.setText(`${this.sharedTowerHeight}/${BLOCKS_TO_WIN}`);
+      }
+
+      if (this.checkWinCondition()) return;
+
+      // Start new problem immediately for this player
+      this.startNewProblem(player, playerNum);
+      this.spawnCorrectBlock(player, playerNum);
+    }
+  }
+
+  showVictorySplash(player, playerNum, word = '') {
+    const x = this.playerCount === 1 ? GAME_WIDTH / 2 :
+      (playerNum === 1 ? HALF_WIDTH / 2 : HALF_WIDTH + HALF_WIDTH / 2);
+    const y = GAME_HEIGHT / 2 - 60;
+
+    let splashText;
+
+    if (this.gameMode === 'arithmetic') {
+      // Show the completed equation: "3 + 4 = 7!"
+      if (player.caughtNumbers.length > 0) {
+        if (player.isSubtraction) {
+          const equation = `${player.startNum} - ${player.caughtNumbers.join(' - ')} = ${player.targetSum}`;
+          splashText = `${equation} ✓`;
+        } else {
+          const equation = `${player.caughtNumbers.join(' + ')} = ${player.targetSum}`;
+          splashText = `${equation} ✓`;
+        }
+      } else {
+        splashText = `= ${player.targetSum} ✓`;
+      }
+    } else {
+      // Show the completed word: "C + AT = CAT! 🐱"
+      const letter = word[0];
+      const pattern = player.currentPattern.substring(1);
+      const emoji = getEmojiForWord(word);
+      splashText = `${letter} + ${pattern} = ${word}! ${emoji}`;
+    }
+
+    // Create splash container
+    const splash = this.add.container(x, y);
+
+    // Background
+    const bg = this.add.rectangle(0, 0, 350, 80, 0x000000, 0.8);
+    bg.setStrokeStyle(4, COLORS.gold);
+
+    // Text
+    const text = this.add.text(0, 0, splashText, {
+      fontSize: '32px',
+      fontFamily: 'Comic Sans MS, Arial',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    splash.add([bg, text]);
+    splash.setScale(0);
+    splash.setDepth(100);
+
+    // Animate in
+    this.tweens.add({
+      targets: splash,
+      scale: 1,
+      duration: 200,
+      ease: 'Back.easeOut',
+      onComplete: () => {
+        // Hold then fade out
+        this.time.delayedCall(1200, () => {
+          this.tweens.add({
+            targets: splash,
+            scale: 0,
+            alpha: 0,
+            duration: 300,
+            onComplete: () => splash.destroy()
+          });
+        });
+      }
     });
   }
 
@@ -893,8 +1082,12 @@ export default class GameScene extends Phaser.Scene {
     if (player.recentResults.length > 5) player.recentResults.shift();
     this.updateAdaptiveDifficulty(player, playerNum);
 
-    const flashX = playerNum === 1 ? HALF_WIDTH / 2 : HALF_WIDTH + HALF_WIDTH / 2;
-    const flash = this.add.rectangle(flashX, GAME_HEIGHT / 2, HALF_WIDTH, GAME_HEIGHT, COLORS.failure, 0.4);
+    // No game over - just let kids keep trying!
+
+    const flashX = this.playerCount === 1 ? GAME_WIDTH / 2 :
+      (playerNum === 1 ? HALF_WIDTH / 2 : HALF_WIDTH + HALF_WIDTH / 2);
+    const flashWidth = this.playerCount === 1 ? GAME_WIDTH : HALF_WIDTH;
+    const flash = this.add.rectangle(flashX, GAME_HEIGHT / 2, flashWidth, GAME_HEIGHT, COLORS.failure, 0.4);
     this.tweens.add({
       targets: flash,
       alpha: 0,
@@ -903,7 +1096,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Sad emoji
-    const sad = this.add.text(flashX, GAME_HEIGHT / 2, '😢', { fontSize: '64px' }).setOrigin(0.5);
+    const sad = this.add.text(flashX, GAME_HEIGHT / 2, '😢', { fontSize: '64px', padding: { top: 10 } }).setOrigin(0.5);
     this.tweens.add({
       targets: sad,
       y: GAME_HEIGHT / 2 - 50,
@@ -943,7 +1136,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     // Big star
-    const star = this.add.text(x, y, '⭐', { fontSize: '80px' }).setOrigin(0.5).setScale(0);
+    const star = this.add.text(x, y, '⭐', { fontSize: '80px', padding: { top: 10 } }).setOrigin(0.5).setScale(0);
     this.tweens.add({
       targets: star,
       scale: 1.5,
@@ -1016,6 +1209,45 @@ export default class GameScene extends Phaser.Scene {
     });
 
     towerBlocks.push(block);
+  }
+
+  addSharedTowerBlock(word = '') {
+    // Add a block to the shared center tower (2-player co-op)
+    const x = GAME_WIDTH / 2;
+    const towerWidth = 100;
+
+    const y = GAME_HEIGHT - 60 - (this.sharedTowerBlocks.length * TOWER_BLOCK_HEIGHT);
+
+    const block = this.add.container(x, GAME_HEIGHT + 50);
+
+    // Alternate colors based on block count
+    const bgColor = this.sharedTowerBlocks.length % 2 === 0 ? 0x4CAF50 : 0xE91E63;
+    const bg = this.add.rectangle(0, 0, towerWidth, TOWER_BLOCK_HEIGHT - 4, bgColor);
+    bg.setStrokeStyle(2, 0xffffff);
+
+    // Show emoji from the completed word or fun icon for math
+    let displayText = '🏠';
+    if (this.gameMode === 'alphabet' && word) {
+      displayText = getEmojiForWord(word);
+    } else {
+      displayText = Phaser.Utils.Array.GetRandom(['⭐', '🌟', '✨', '🎯', '🏆']);
+    }
+
+    const label = this.add.text(0, 0, displayText, {
+      fontSize: '24px',
+      padding: { top: 10 }
+    }).setOrigin(0.5);
+
+    block.add([bg, label]);
+
+    this.tweens.add({
+      targets: block,
+      y: y,
+      duration: 500,
+      ease: 'Bounce.easeOut'
+    });
+
+    this.sharedTowerBlocks.push(block);
   }
 
   updateAdaptiveDifficulty(player, playerNum) {
@@ -1094,13 +1326,25 @@ export default class GameScene extends Phaser.Scene {
   }
 
   checkWinCondition() {
-    const p1Wins = this.player1.towerHeight >= BLOCKS_TO_WIN;
-    const p2Wins = this.playerCount === 1 || this.player2.towerHeight >= BLOCKS_TO_WIN;
+    let hasWon = false;
 
-    if (p1Wins && p2Wins) {
+    if (this.playerCount === 1) {
+      // Single player - individual tower
+      hasWon = this.player1.towerHeight >= BLOCKS_TO_WIN;
+    } else {
+      // 2-player co-op - shared tower
+      hasWon = this.sharedTowerHeight >= BLOCKS_TO_WIN;
+    }
+
+    if (hasWon) {
+      soundManager.stopMusic();
       soundManager.win();
       this.time.delayedCall(1000, () => {
-        this.scene.start('WinScene', { mode: this.gameMode, playerCount: this.playerCount });
+        this.scene.start('WinScene', {
+          mode: this.gameMode,
+          playerCount: this.playerCount,
+          emojis: this.sharedTowerBlocks ? this.sharedTowerBlocks.length : 0
+        });
       });
       return true;
     }
@@ -1122,7 +1366,7 @@ export default class GameScene extends Phaser.Scene {
       });
     }
 
-    const star = this.add.text(x, y, '✨', { fontSize: '40px' }).setOrigin(0.5);
+    const star = this.add.text(x, y, '✨', { fontSize: '40px', padding: { top: 10 } }).setOrigin(0.5);
     this.tweens.add({
       targets: star,
       y: y - 40,
@@ -1134,7 +1378,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   createFailEffect(x, y) {
-    const xMark = this.add.text(x, y, '❌', { fontSize: '48px' }).setOrigin(0.5);
+    const xMark = this.add.text(x, y, '❌', { fontSize: '48px', padding: { top: 10 } }).setOrigin(0.5);
     this.tweens.add({
       targets: xMark,
       y: y - 40,

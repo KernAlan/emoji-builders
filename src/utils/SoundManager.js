@@ -5,6 +5,8 @@ export default class SoundManager {
     this.enabled = true;
     this.audioContext = null;
     this.initialized = false;
+    this.musicPlaying = false;
+    this.musicInterval = null;
   }
 
   init() {
@@ -21,6 +23,9 @@ export default class SoundManager {
 
   toggle() {
     this.enabled = !this.enabled;
+    if (!this.enabled) {
+      this.stopMusic();
+    }
     return this.enabled;
   }
 
@@ -103,6 +108,44 @@ export default class SoundManager {
     if (!this.enabled) return;
     this.init();
     this.playTone(200, 0.05, 'sine', 0.1);
+  }
+
+  // Background music - gentle looping melody
+  startMusic() {
+    if (!this.enabled || this.musicPlaying) return;
+    this.init();
+    this.musicPlaying = true;
+
+    // Simple cheerful melody notes (C major pentatonic)
+    const melodyNotes = [262, 294, 330, 392, 440, 392, 330, 294]; // C D E G A G E D
+    const bassNotes = [131, 131, 165, 165, 131, 131, 165, 165]; // C C E E C C E E
+    let noteIndex = 0;
+
+    const playMusicNote = () => {
+      if (!this.enabled || !this.musicPlaying) return;
+
+      // Play melody note (quiet)
+      this.playTone(melodyNotes[noteIndex], 0.3, 'sine', 0.08);
+
+      // Play bass note (very quiet)
+      this.playTone(bassNotes[noteIndex], 0.4, 'triangle', 0.05);
+
+      noteIndex = (noteIndex + 1) % melodyNotes.length;
+    };
+
+    // Play first note immediately
+    playMusicNote();
+
+    // Then loop every 400ms
+    this.musicInterval = setInterval(playMusicNote, 400);
+  }
+
+  stopMusic() {
+    this.musicPlaying = false;
+    if (this.musicInterval) {
+      clearInterval(this.musicInterval);
+      this.musicInterval = null;
+    }
   }
 }
 

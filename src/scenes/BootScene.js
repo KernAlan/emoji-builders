@@ -64,7 +64,8 @@ export default class BootScene extends Phaser.Scene {
 
     // Construction crane emoji
     const crane = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 180, '🏗️', {
-      fontSize: '64px'
+      fontSize: '64px',
+      padding: { top: 10 }
     }).setOrigin(0.5).setAlpha(0);
 
     // Animate title in
@@ -99,12 +100,13 @@ export default class BootScene extends Phaser.Scene {
     emojis.forEach((emoji, i) => {
       const x = GAME_WIDTH / 2 + (i - 2) * 90;
       const e = this.add.text(x, -50, emoji, {
-        fontSize: '48px'
+        fontSize: '48px',
+        padding: { top: 10 }
       }).setOrigin(0.5);
 
       this.tweens.add({
         targets: e,
-        y: GAME_HEIGHT / 2 + 100,
+        y: GAME_HEIGHT / 2 + 70,
         delay: 800 + i * 150,
         duration: 600,
         ease: 'Bounce.easeOut'

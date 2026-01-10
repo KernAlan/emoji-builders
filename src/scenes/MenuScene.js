@@ -175,7 +175,8 @@ export default class MenuScene extends Phaser.Scene {
     const y = 40;
 
     this.soundIcon = this.add.text(x, y, soundManager.enabled ? '🔊' : '🔇', {
-      fontSize: '32px'
+      fontSize: '32px',
+      padding: { top: 10 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     this.soundIcon.on('pointerdown', () => {
@@ -197,7 +198,8 @@ export default class MenuScene extends Phaser.Scene {
     this.add.rectangle(x, y - 15, 240, 150, colorLight, 0.3);
 
     const emojiText = this.add.text(x, y - 50, emoji, {
-      fontSize: '64px'
+      fontSize: '64px',
+      padding: { top: 10 }
     }).setOrigin(0.5);
 
     this.tweens.add({
@@ -254,7 +256,7 @@ export default class MenuScene extends Phaser.Scene {
   startGame(mode) {
     this.cameras.main.fadeOut(300);
     this.time.delayedCall(300, () => {
-      this.scene.start('GameScene', {
+      this.scene.start('IntroScene', {
         mode: mode,
         playerCount: this.playerCount
       });
