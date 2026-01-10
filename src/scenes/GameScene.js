@@ -628,18 +628,17 @@ export default class GameScene extends Phaser.Scene {
         neededValue = player.targetSum - player.currentSum;
       }
 
-      // Check if there's already a "winning" block on screen
-      const hasWinningBlock = player.blocks.some(b => b.value === neededValue);
+      // Count how many correct blocks are on screen
+      const correctBlockCount = player.blocks.filter(b => b.value === neededValue).length;
 
-      // ALWAYS ensure at least one correct answer is available
-      if (!hasWinningBlock && neededValue > 0) {
-        // No winning block - MUST spawn the exact needed value
+      // ALWAYS keep at least 2 correct answers on screen
+      if (correctBlockCount < 2 && neededValue > 0) {
         value = neededValue;
-      } else if (neededValue > 0 && Math.random() < 0.6) {
-        // 60% chance to spawn a helpful number
-        value = Phaser.Math.Between(1, Math.min(neededValue, difficulty.maxSum));
+      } else if (Math.random() < 0.5) {
+        // 50% chance for the exact answer
+        value = neededValue > 0 ? neededValue : Phaser.Math.Between(1, difficulty.maxSum);
       } else {
-        // 40% chance for random (adds variety)
+        // 50% variety
         value = Phaser.Math.Between(1, difficulty.maxSum);
       }
       displayText = value.toString();
@@ -647,18 +646,15 @@ export default class GameScene extends Phaser.Scene {
       const patternData = phonicsPatterns[player.currentPattern];
       const validLetters = [...new Set(patternData.validWords.map(w => w[0]))];
 
-      // Check if there's already a valid letter on screen
-      const hasValidBlock = player.blocks.some(b => validLetters.includes(b.letter));
+      // Count how many valid letters are on screen
+      const validBlockCount = player.blocks.filter(b => validLetters.includes(b.letter)).length;
 
-      // ALWAYS ensure at least one correct letter is available
-      if (!hasValidBlock) {
-        // No valid block - MUST spawn a valid letter
+      // ALWAYS keep at least 2 valid letters on screen
+      if (validBlockCount < 2) {
         letter = Phaser.Utils.Array.GetRandom(validLetters);
-      } else if (Math.random() < 0.6) {
-        // 60% chance for valid letter
+      } else if (Math.random() < 0.5) {
         letter = Phaser.Utils.Array.GetRandom(validLetters);
       } else {
-        // 40% chance for decoy (adds challenge)
         letter = Phaser.Utils.Array.GetRandom(patternData.decoyLetters);
       }
       displayText = letter;
