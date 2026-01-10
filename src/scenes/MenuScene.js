@@ -87,7 +87,7 @@ export default class MenuScene extends Phaser.Scene {
       color: '#555555'
     }).setOrigin(0.5);
 
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 75, '⭐ Both towers must reach the top to win! ⭐', {
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 75, '⭐ Build the Emoji House together! ⭐', {
       fontSize: '14px',
       fontFamily: 'Comic Sans MS, Arial',
       color: '#4CAF50',
