@@ -630,17 +630,20 @@ export default class GameScene extends Phaser.Scene {
       displayText = value.toString();
     } else {
       const patternData = phonicsPatterns[player.currentPattern];
-      const validLetters = [...new Set(patternData.validWords.map(w => w[0]))];
-      const validBlockCount = player.blocks.filter(b => validLetters.includes(b.letter)).length;
+      const neededLetter = player.targetWord[0]; // First letter of target word
+      const correctBlockCount = player.blocks.filter(b => b.letter === neededLetter).length;
 
-      // Force correct, or keep at least 2 valid letters on screen
-      if (forceCorrect || validBlockCount < 2 || Math.random() < 0.5) {
-        letter = Phaser.Utils.Array.GetRandom(validLetters);
+      // Force correct, or keep at least 2 correct letters on screen
+      if (forceCorrect || correctBlockCount < 2) {
+        letter = neededLetter;
+      } else if (Math.random() < 0.5) {
+        letter = neededLetter;
       } else {
+        // Spawn a decoy letter (wrong answer)
         letter = Phaser.Utils.Array.GetRandom(patternData.decoyLetters);
       }
       displayText = letter;
-      isValid = validLetters.includes(letter);
+      isValid = letter === neededLetter;
     }
 
     const x = Phaser.Math.Between(startX, endX);
@@ -836,7 +839,8 @@ export default class GameScene extends Phaser.Scene {
     } else {
       const formedWord = block.letter + player.currentPattern.substring(1);
 
-      if (player.validWords.includes(formedWord)) {
+      // Must match the EXACT word shown by the emoji, not just any valid word
+      if (formedWord === player.targetWord) {
         this.createCatchEffect(block.x, block.y);
         block.destroy();
         this.playerSuccess(player, playerNum, formedWord);
