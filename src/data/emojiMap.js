@@ -3,22 +3,22 @@
 
 export const emojiMap = {
   // _AT words
-  'CAT': '🐈',
+  'CAT': '🐱',
   'BAT': '🦇',
   'HAT': '🎩',
-  'MAT': '🧹',
-  'RAT': '🐀',
-  'SAT': '🪑',
+  'MAT': '🟫',
+  'RAT': '🐭',
+  'SAT': '💺',
   'PAT': '👋',
   'FAT': '🍔',
 
   // _OG words
-  'DOG': '🐕',
-  'LOG': '🪵',
-  'FOG': '🌫️',
+  'DOG': '🐶',
+  'LOG': '🌳',
+  'FOG': '☁️',
   'HOG': '🐷',
   'JOG': '🏃',
-  'BOG': '🌿',
+  'BOG': '🌲',
 
   // _UN words
   'SUN': '☀️',
@@ -64,9 +64,9 @@ export const emojiMap = {
   'BUG': '🐛',
   'HUG': '🤗',
   'MUG': '☕',
-  'RUG': '🧶',
+  'RUG': '🟫',
   'TUG': '🚢',
-  'JUG': '🫗',
+  'JUG': '🏺',
 
   // _OT words
   'HOT': '🔥',
