@@ -117,10 +117,10 @@ export default class GameScene extends Phaser.Scene {
       towerHeight: 0,
       difficulty: 'easy',
       blocks: [],
-      // Fast adaptive difficulty tracking
-      recentResults: [], // Last 5 results (true=success, false=fail)
-      currentFallSpeed: 120, // Start fast - no waiting!
-      currentSpawnInterval: 1200, // Quick spawns
+      // Ultra-responsive adaptive difficulty tracking
+      recentResults: [], // Recent results for tracking
+      currentFallSpeed: 100, // Start medium - adjusts instantly either way
+      currentSpawnInterval: 1200, // Medium spawn rate
       streak: 0 // Positive for success streak, negative for fail streak
     };
   }
@@ -1019,46 +1019,39 @@ export default class GameScene extends Phaser.Scene {
   }
 
   updateAdaptiveDifficulty(player, playerNum) {
-    // FAST adaptive difficulty - adjusts immediately based on performance
-    const minSpeed = 80;  // Slowest fall speed (still quick)
-    const maxSpeed = 180; // Fastest fall speed (harder)
-    const minInterval = 800;  // Fastest spawn
-    const maxInterval = 1500; // Slowest spawn (still quick)
+    // ULTRA-RESPONSIVE adaptive difficulty
+    // Reacts IMMEDIATELY - one fail = slow down, one success = speed up
+    const minSpeed = 50;   // Very slow for struggling kids
+    const maxSpeed = 200;  // Fast for kids crushing it
+    const minInterval = 600;  // Fast spawns when doing well
+    const maxInterval = 2500; // Slow spawns when struggling
 
-    // Calculate success rate from recent results
-    const successCount = player.recentResults.filter(r => r).length;
-    const totalCount = player.recentResults.length;
-    const successRate = totalCount > 0 ? successCount / totalCount : 0.5;
-
-    // Adjust based on streak (immediate response)
+    // IMMEDIATE reaction to last result
+    const lastResult = player.recentResults[player.recentResults.length - 1];
     let speedAdjust = 0;
     let intervalAdjust = 0;
 
-    if (player.streak >= 3) {
-      // Doing great! Speed up significantly
-      speedAdjust = 15;
-      intervalAdjust = -200;
-    } else if (player.streak >= 2) {
-      // Doing well, speed up a bit
-      speedAdjust = 8;
-      intervalAdjust = -100;
-    } else if (player.streak <= -2) {
-      // Struggling! Slow down significantly
-      speedAdjust = -15;
-      intervalAdjust = 300;
-    } else if (player.streak <= -1) {
-      // Made a mistake, slow down a bit
-      speedAdjust = -8;
-      intervalAdjust = 150;
-    }
-
-    // Also consider overall success rate for base difficulty
-    if (successRate >= 0.8 && totalCount >= 3) {
-      speedAdjust += 5;
-      intervalAdjust -= 50;
-    } else if (successRate <= 0.3 && totalCount >= 3) {
-      speedAdjust -= 10;
-      intervalAdjust += 200;
+    if (lastResult === true) {
+      // Success! Speed up based on streak
+      if (player.streak >= 3) {
+        speedAdjust = 25;      // Big speed boost
+        intervalAdjust = -200;
+      } else if (player.streak >= 2) {
+        speedAdjust = 15;
+        intervalAdjust = -100;
+      } else {
+        speedAdjust = 8;
+        intervalAdjust = -50;
+      }
+    } else if (lastResult === false) {
+      // Fail! Slow down IMMEDIATELY and significantly
+      if (player.streak <= -2) {
+        speedAdjust = -40;     // Major slowdown
+        intervalAdjust = 400;
+      } else {
+        speedAdjust = -25;     // Immediate slowdown on first fail
+        intervalAdjust = 250;
+      }
     }
 
     // Apply adjustments with clamping
