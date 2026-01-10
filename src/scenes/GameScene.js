@@ -875,11 +875,13 @@ export default class GameScene extends Phaser.Scene {
 
     for (let i = this.player1.blocks.length - 1; i >= 0; i--) {
       const block = this.player1.blocks[i];
+      if (!block || !block.y) continue; // Block may have been cleared
       const blockBottom = block.y + BLOCK_SIZE / 2;
 
       if (blockBottom >= catcherTop && blockBottom <= catcherTop + 35) {
         if (Math.abs(block.x - this.catcher1.x) < (CATCHER_WIDTH / 2 + BLOCK_SIZE / 2 - 10)) {
           this.catchBlock(this.player1, block, i, 1);
+          break; // Exit loop - blocks may have been cleared on success
         }
       }
     }
@@ -887,11 +889,13 @@ export default class GameScene extends Phaser.Scene {
     if (this.playerCount === 2) {
       for (let i = this.player2.blocks.length - 1; i >= 0; i--) {
         const block = this.player2.blocks[i];
+        if (!block || !block.y) continue; // Block may have been cleared
         const blockBottom = block.y + BLOCK_SIZE / 2;
 
         if (blockBottom >= catcherTop && blockBottom <= catcherTop + 35) {
           if (Math.abs(block.x - this.catcher2.x) < (CATCHER_WIDTH / 2 + BLOCK_SIZE / 2 - 10)) {
             this.catchBlock(this.player2, block, i, 2);
+            break; // Exit loop - blocks may have been cleared on success
           }
         }
       }
