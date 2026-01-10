@@ -23,8 +23,8 @@ export const COLORS = {
   gold: 0xFFD700
 };
 
-// Game settings - BIGGER for kids
-export const BLOCK_SIZE = 65;
+// Game settings
+export const BLOCK_SIZE = 50;
 export const TOWER_BLOCK_HEIGHT = 45;
 
 // Difficulty settings

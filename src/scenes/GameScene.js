@@ -72,9 +72,9 @@ export default class GameScene extends Phaser.Scene {
       });
     }
 
-    // Initial spawns - start with 3 blocks each for immediate action
-    for (let i = 0; i < 3; i++) {
-      this.time.delayedCall(i * 400, () => {
+    // Initial spawns - start with 2 blocks each, spaced out to avoid overlap
+    for (let i = 0; i < 2; i++) {
+      this.time.delayedCall(i * 600, () => {
         this.spawnBlock(this.player1, 1);
         if (this.playerCount === 2) {
           this.spawnBlock(this.player2, 2);
@@ -116,7 +116,7 @@ export default class GameScene extends Phaser.Scene {
       // Fast adaptive difficulty tracking
       recentResults: [], // Last 5 results (true=success, false=fail)
       currentFallSpeed: DIFFICULTY.easy.fallSpeed,
-      currentSpawnInterval: 1500, // Start faster than default
+      currentSpawnInterval: 1800, // Balanced to prevent overlap
       streak: 0 // Positive for success streak, negative for fail streak
     };
   }
@@ -679,7 +679,7 @@ export default class GameScene extends Phaser.Scene {
     const shine = this.add.rectangle(-BLOCK_SIZE/4, -BLOCK_SIZE/4, BLOCK_SIZE/3, BLOCK_SIZE/3, 0xffffff, 0.3);
 
     const label = this.add.text(0, 0, text, {
-      fontSize: '36px',
+      fontSize: '28px',
       fontFamily: 'Comic Sans MS, Arial',
       color: '#333333',
       fontStyle: 'bold'
@@ -1024,8 +1024,8 @@ export default class GameScene extends Phaser.Scene {
     // FAST adaptive difficulty - adjusts immediately based on performance
     const minSpeed = 40;  // Slowest fall speed (easier)
     const maxSpeed = 120; // Fastest fall speed (harder)
-    const minInterval = 800;  // Fastest spawn (harder) - keeps blocks coming!
-    const maxInterval = 2000; // Slowest spawn (easier)
+    const minInterval = 1000; // Fastest spawn (harder) - prevents overlap
+    const maxInterval = 2200; // Slowest spawn (easier)
 
     // Calculate success rate from recent results
     const successCount = player.recentResults.filter(r => r).length;

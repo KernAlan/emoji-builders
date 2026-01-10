@@ -1,0 +1,8 @@
+services:
+  - type: static_site
+    name: emoji-builders
+    repo: https://github.com/KernAlan/emoji-builders
+    branch: master
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars: []
