@@ -80,7 +80,64 @@ export const emojiMap = {
   'BED': '🛏️',
   'RED': '🔴',
   'FED': '🍽️',
-  'LED': '💡'
+  'LED': '💡',
+
+  // _IG words
+  'BIG': '🐘',
+  'PIG': '🐷',
+  'DIG': '⛏️',
+  'WIG': '💇',
+  'FIG': '🍇',
+  'JIG': '💃',
+
+  // _AP words
+  'CAP': '🧢',
+  'MAP': '🗺️',
+  'TAP': '🚰',
+  'NAP': '😴',
+  'LAP': '🏃',
+  'ZAP': '⚡',
+  'GAP': '🕳️',
+
+  // _ET words
+  'PET': '🐕',
+  'WET': '💧',
+  'JET': '✈️',
+  'NET': '🥅',
+  'BET': '🎲',
+  'SET': '📺',
+
+  // _OW words
+  'COW': '🐄',
+  'BOW': '🎀',
+  'WOW': '😮',
+  'NOW': '⏰',
+  'HOW': '❓',
+
+  // _AM words
+  'HAM': '🍖',
+  'JAM': '🍓',
+  'DAM': '🌊',
+  'RAM': '🐏',
+  'YAM': '🍠',
+
+  // _AB words
+  'CAB': '🚕',
+  'TAB': '📑',
+  'LAB': '🔬',
+  'JAB': '👊',
+  'DAB': '💪',
+
+  // _OX words
+  'BOX': '📦',
+  'FOX': '🦊',
+
+  // _UB words
+  'TUB': '🛁',
+  'CUB': '🐻',
+  'RUB': '🧽',
+  'SUB': '🥪',
+  'HUB': '🎡'
 };
 
 // Get emoji for a word, or a question mark if not found

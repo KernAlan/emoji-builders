@@ -33,19 +33,19 @@ export const DIFFICULTY = {
     maxSum: 5,
     fallSpeed: 55,
     spawnInterval: 2200,
-    wordPatterns: ['_AT', '_OG', '_UN']
+    wordPatterns: ['_AT', '_OG', '_UN', '_IG', '_OX', '_OW']
   },
   medium: {
     maxSum: 8,
     fallSpeed: 70,
     spawnInterval: 1900,
-    wordPatterns: ['_AT', '_OG', '_UN', '_AN', '_EN', '_IT']
+    wordPatterns: ['_AT', '_OG', '_UN', '_AN', '_EN', '_IT', '_IG', '_AP', '_ET', '_OW']
   },
   hard: {
     maxSum: 10,
     fallSpeed: 90,
     spawnInterval: 1600,
-    wordPatterns: ['_AT', '_OG', '_UN', '_AN', '_EN', '_IT', '_OP', '_UG']
+    wordPatterns: ['_AT', '_OG', '_UN', '_AN', '_EN', '_IT', '_OP', '_UG', '_IG', '_AP', '_ET', '_OW', '_AM', '_AB', '_OX', '_UB', '_OT', '_ED']
   }
 };
 

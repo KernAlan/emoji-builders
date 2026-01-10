@@ -41,6 +41,38 @@ export const phonicsPatterns = {
   '_ED': {
     validWords: ['BED', 'RED', 'FED', 'LED'],
     decoyLetters: ['Z', 'Q', 'X', 'V']
+  },
+  '_IG': {
+    validWords: ['BIG', 'PIG', 'DIG', 'WIG', 'FIG', 'JIG'],
+    decoyLetters: ['Z', 'Q', 'X', 'V']
+  },
+  '_AP': {
+    validWords: ['CAP', 'MAP', 'TAP', 'NAP', 'LAP', 'ZAP', 'GAP'],
+    decoyLetters: ['Q', 'X', 'V']
+  },
+  '_ET': {
+    validWords: ['PET', 'WET', 'JET', 'NET', 'BET', 'SET'],
+    decoyLetters: ['Z', 'Q', 'X', 'V']
+  },
+  '_OW': {
+    validWords: ['COW', 'BOW', 'WOW', 'NOW', 'HOW'],
+    decoyLetters: ['Z', 'Q', 'X', 'V']
+  },
+  '_AM': {
+    validWords: ['HAM', 'JAM', 'DAM', 'RAM', 'YAM'],
+    decoyLetters: ['Z', 'Q', 'X', 'V']
+  },
+  '_AB': {
+    validWords: ['CAB', 'TAB', 'LAB', 'JAB', 'DAB'],
+    decoyLetters: ['Z', 'Q', 'X', 'V']
+  },
+  '_OX': {
+    validWords: ['BOX', 'FOX'],
+    decoyLetters: ['Z', 'Q', 'V', 'W']
+  },
+  '_UB': {
+    validWords: ['TUB', 'CUB', 'RUB', 'SUB', 'HUB'],
+    decoyLetters: ['Z', 'Q', 'X', 'V']
   }
 };
 
