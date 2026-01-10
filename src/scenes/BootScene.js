@@ -111,9 +111,9 @@ export default class BootScene extends Phaser.Scene {
       });
     });
 
-    // Press to continue
-    const pressText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 140, '✨ Press any key to start! ✨', {
-      fontSize: '28px',
+    // Press/click to continue
+    const pressText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 140, '✨ Click or press any key to start! ✨', {
+      fontSize: '26px',
       fontFamily: 'Comic Sans MS, Arial',
       color: '#ffffff',
       stroke: '#333333',
@@ -141,14 +141,17 @@ export default class BootScene extends Phaser.Scene {
       }
     });
 
-    // Wait for input
+    // Wait for input (keyboard OR click/tap)
     this.time.delayedCall(1800, () => {
-      this.input.keyboard.once('keydown', () => {
+      const goToMenu = () => {
         this.cameras.main.fadeOut(400);
         this.time.delayedCall(400, () => {
           this.scene.start('MenuScene');
         });
-      });
+      };
+
+      this.input.keyboard.once('keydown', goToMenu);
+      this.input.once('pointerdown', goToMenu);
     });
   }
 }

@@ -627,15 +627,15 @@ export default class GameScene extends Phaser.Scene {
       // Check if there's already a "winning" block on screen
       const hasWinningBlock = player.blocks.some(b => b.value === neededValue);
 
-      // 70% chance to spawn helpful block, 100% if no winning block exists
-      if (neededValue > 0 && (Math.random() < 0.7 || !hasWinningBlock)) {
-        // Spawn the exact needed value 50% of the time, otherwise a partial value
-        if (Math.random() < 0.5 || !hasWinningBlock) {
-          value = neededValue; // Exact match!
-        } else {
-          value = Phaser.Math.Between(1, Math.min(neededValue, difficulty.maxSum));
-        }
+      // ALWAYS ensure at least one correct answer is available
+      if (!hasWinningBlock && neededValue > 0) {
+        // No winning block - MUST spawn the exact needed value
+        value = neededValue;
+      } else if (neededValue > 0 && Math.random() < 0.6) {
+        // 60% chance to spawn a helpful number
+        value = Phaser.Math.Between(1, Math.min(neededValue, difficulty.maxSum));
       } else {
+        // 40% chance for random (adds variety)
         value = Phaser.Math.Between(1, difficulty.maxSum);
       }
       displayText = value.toString();
@@ -646,10 +646,15 @@ export default class GameScene extends Phaser.Scene {
       // Check if there's already a valid letter on screen
       const hasValidBlock = player.blocks.some(b => validLetters.includes(b.letter));
 
-      // 70% chance valid letter, 100% if none on screen
-      if (Math.random() < 0.7 || !hasValidBlock) {
+      // ALWAYS ensure at least one correct letter is available
+      if (!hasValidBlock) {
+        // No valid block - MUST spawn a valid letter
+        letter = Phaser.Utils.Array.GetRandom(validLetters);
+      } else if (Math.random() < 0.6) {
+        // 60% chance for valid letter
         letter = Phaser.Utils.Array.GetRandom(validLetters);
       } else {
+        // 40% chance for decoy (adds challenge)
         letter = Phaser.Utils.Array.GetRandom(patternData.decoyLetters);
       }
       displayText = letter;
