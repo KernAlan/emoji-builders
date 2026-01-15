@@ -9,6 +9,7 @@ export default class IntroScene extends Phaser.Scene {
   init(data) {
     this.gameMode = data.mode || 'arithmetic';
     this.playerCount = data.playerCount || 2;
+    this.difficulty = data.difficulty || 'medium';
   }
 
   create() {
@@ -143,7 +144,8 @@ export default class IntroScene extends Phaser.Scene {
     this.time.delayedCall(300, () => {
       this.scene.start('GameScene', {
         mode: this.gameMode,
-        playerCount: this.playerCount
+        playerCount: this.playerCount,
+        difficulty: this.difficulty
       });
     });
   }

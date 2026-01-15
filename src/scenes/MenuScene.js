@@ -256,7 +256,7 @@ export default class MenuScene extends Phaser.Scene {
   startGame(mode) {
     this.cameras.main.fadeOut(300);
     this.time.delayedCall(300, () => {
-      this.scene.start('IntroScene', {
+      this.scene.start('ModeSelectionScene', {
         mode: mode,
         playerCount: this.playerCount
       });

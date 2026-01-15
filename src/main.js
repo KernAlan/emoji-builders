@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, COLORS } from './utils/constants.js';
 import BootScene from './scenes/BootScene.js';
 import MenuScene from './scenes/MenuScene.js';
+import ModeSelectionScene from './scenes/ModeSelectionScene.js';
 import IntroScene from './scenes/IntroScene.js';
 import GameScene from './scenes/GameScene.js';
 import WinScene from './scenes/WinScene.js';
@@ -19,7 +20,7 @@ const config = {
       debug: false
     }
   },
-  scene: [BootScene, MenuScene, IntroScene, GameScene, WinScene]
+  scene: [BootScene, MenuScene, ModeSelectionScene, IntroScene, GameScene, WinScene]
 };
 
 const game = new Phaser.Game(config);

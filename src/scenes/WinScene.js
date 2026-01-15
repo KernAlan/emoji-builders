@@ -11,6 +11,7 @@ export default class WinScene extends Phaser.Scene {
     this.gameMode = data.mode || 'arithmetic';
     this.playerCount = data.playerCount || 2;
     this.emojisCount = data.emojis || 6;
+    this.difficulty = data.difficulty || 'medium';
   }
 
   create() {
@@ -87,7 +88,7 @@ export default class WinScene extends Phaser.Scene {
       soundManager.select();
       this.cameras.main.fadeOut(300);
       this.time.delayedCall(300, () => {
-        this.scene.start('GameScene', { mode: this.gameMode, playerCount: this.playerCount });
+        this.scene.start('GameScene', { mode: this.gameMode, playerCount: this.playerCount, difficulty: this.difficulty });
       });
     });
 
@@ -102,7 +103,7 @@ export default class WinScene extends Phaser.Scene {
     // Keyboard shortcuts
     this.input.keyboard.on('keydown-SPACE', () => {
       soundManager.select();
-      this.scene.start('GameScene', { mode: this.gameMode, playerCount: this.playerCount });
+      this.scene.start('GameScene', { mode: this.gameMode, playerCount: this.playerCount, difficulty: this.difficulty });
     });
 
     this.input.keyboard.on('keydown-ESC', () => {

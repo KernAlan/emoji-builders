@@ -12,6 +12,13 @@ const CATCHER_HEIGHT = 20;
 const CATCHER_SPEED = 380;
 const TOWER_WIDTH = 90;
 
+// Block sizes by difficulty (larger = easier to read)
+const BLOCK_SIZE_BY_DIFFICULTY = {
+  easy: 60,
+  medium: 50,
+  hard: 42
+};
+
 const PLAY_AREA_LEFT_START = TOWER_WIDTH + 10;
 const PLAY_AREA_LEFT_END = HALF_WIDTH - 10;
 const PLAY_AREA_RIGHT_START = HALF_WIDTH + 10;
@@ -25,6 +32,7 @@ export default class GameScene extends Phaser.Scene {
   init(data) {
     this.gameMode = data.mode || 'arithmetic';
     this.playerCount = data.playerCount || 2;
+    this.startingDifficulty = data.difficulty || 'medium';
     this.mathType = 'addition';
     this.isPaused = false;
 
@@ -43,6 +51,9 @@ export default class GameScene extends Phaser.Scene {
     this.primaryColor = this.gameMode === 'alphabet' ? COLORS.catcherWord : COLORS.catcherMath;
     this.blockColor = this.gameMode === 'alphabet' ? COLORS.blockWord : COLORS.blockMath;
     this.bgColor = this.gameMode === 'alphabet' ? COLORS.wordSide : COLORS.mathSide;
+
+    // Block size based on difficulty
+    this.blockSize = BLOCK_SIZE_BY_DIFFICULTY[this.startingDifficulty];
 
     this.drawBackground();
     this.createClouds();
@@ -113,6 +124,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   createPlayerState() {
+    const difficultySettings = DIFFICULTY[this.startingDifficulty];
+
     return {
       currentSum: 0,
       targetSum: 0,
@@ -123,12 +136,12 @@ export default class GameScene extends Phaser.Scene {
       validWords: [],
       targetWord: '',
       towerHeight: 0,
-      difficulty: 'easy',
+      difficulty: this.startingDifficulty,
       blocks: [],
       // Ultra-responsive adaptive difficulty tracking
       recentResults: [], // Recent results for tracking
-      currentFallSpeed: 100, // Start medium - adjusts instantly either way
-      currentSpawnInterval: 1200, // Medium spawn rate
+      currentFallSpeed: difficultySettings.fallSpeed, // Start at selected difficulty speed
+      currentSpawnInterval: difficultySettings.spawnInterval, // Start at selected spawn rate
       streak: 0 // Positive for success streak, negative for fail streak
     };
   }
@@ -753,17 +766,21 @@ export default class GameScene extends Phaser.Scene {
 
   createFallingBlock(x, y, text) {
     const container = this.add.container(x, y);
+    const size = this.blockSize;
 
     // Rounded rectangle effect
-    const shadow = this.add.rectangle(3, 3, BLOCK_SIZE, BLOCK_SIZE, 0x000000, 0.3);
-    const bg = this.add.rectangle(0, 0, BLOCK_SIZE, BLOCK_SIZE, this.blockColor);
+    const shadow = this.add.rectangle(3, 3, size, size, 0x000000, 0.3);
+    const bg = this.add.rectangle(0, 0, size, size, this.blockColor);
     bg.setStrokeStyle(3, 0xffffff);
 
     // Shine effect
-    const shine = this.add.rectangle(-BLOCK_SIZE/4, -BLOCK_SIZE/4, BLOCK_SIZE/3, BLOCK_SIZE/3, 0xffffff, 0.3);
+    const shine = this.add.rectangle(-size/4, -size/4, size/3, size/3, 0xffffff, 0.3);
+
+    // Font size scales with block size (28px at 50, 34px at 60, 24px at 42)
+    const fontSize = Math.round(size * 0.56) + 'px';
 
     const label = this.add.text(0, 0, text, {
-      fontSize: '28px',
+      fontSize: fontSize,
       fontFamily: 'Comic Sans MS, Arial',
       color: '#333333',
       fontStyle: 'bold'
@@ -877,10 +894,10 @@ export default class GameScene extends Phaser.Scene {
     for (let i = this.player1.blocks.length - 1; i >= 0; i--) {
       const block = this.player1.blocks[i];
       if (!block || !block.y) continue; // Block may have been cleared
-      const blockBottom = block.y + BLOCK_SIZE / 2;
+      const blockBottom = block.y + this.blockSize / 2;
 
       if (blockBottom >= catcherTop && blockBottom <= catcherTop + 35) {
-        if (Math.abs(block.x - this.catcher1.x) < (CATCHER_WIDTH / 2 + BLOCK_SIZE / 2 - 10)) {
+        if (Math.abs(block.x - this.catcher1.x) < (CATCHER_WIDTH / 2 + this.blockSize / 2 - 10)) {
           this.catchBlock(this.player1, block, i, 1);
           break; // Exit loop - blocks may have been cleared on success
         }
@@ -891,10 +908,10 @@ export default class GameScene extends Phaser.Scene {
       for (let i = this.player2.blocks.length - 1; i >= 0; i--) {
         const block = this.player2.blocks[i];
         if (!block || !block.y) continue; // Block may have been cleared
-        const blockBottom = block.y + BLOCK_SIZE / 2;
+        const blockBottom = block.y + this.blockSize / 2;
 
         if (blockBottom >= catcherTop && blockBottom <= catcherTop + 35) {
-          if (Math.abs(block.x - this.catcher2.x) < (CATCHER_WIDTH / 2 + BLOCK_SIZE / 2 - 10)) {
+          if (Math.abs(block.x - this.catcher2.x) < (CATCHER_WIDTH / 2 + this.blockSize / 2 - 10)) {
             this.catchBlock(this.player2, block, i, 2);
             break; // Exit loop - blocks may have been cleared on success
           }
@@ -1348,7 +1365,8 @@ export default class GameScene extends Phaser.Scene {
         this.scene.start('WinScene', {
           mode: this.gameMode,
           playerCount: this.playerCount,
-          emojis: this.sharedTowerBlocks ? this.sharedTowerBlocks.length : 0
+          emojis: this.sharedTowerBlocks ? this.sharedTowerBlocks.length : 0,
+          difficulty: this.startingDifficulty
         });
       });
       return true;
@@ -1396,7 +1414,7 @@ export default class GameScene extends Phaser.Scene {
 
   cleanupBlocks() {
     for (let i = this.player1.blocks.length - 1; i >= 0; i--) {
-      if (this.player1.blocks[i].y > GAME_HEIGHT + BLOCK_SIZE) {
+      if (this.player1.blocks[i].y > GAME_HEIGHT + this.blockSize) {
         this.player1.blocks[i].destroy();
         this.player1.blocks.splice(i, 1);
       }
@@ -1404,7 +1422,7 @@ export default class GameScene extends Phaser.Scene {
 
     if (this.playerCount === 2) {
       for (let i = this.player2.blocks.length - 1; i >= 0; i--) {
-        if (this.player2.blocks[i].y > GAME_HEIGHT + BLOCK_SIZE) {
+        if (this.player2.blocks[i].y > GAME_HEIGHT + this.blockSize) {
           this.player2.blocks[i].destroy();
           this.player2.blocks.splice(i, 1);
         }
